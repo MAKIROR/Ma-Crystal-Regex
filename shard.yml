@@ -1,0 +1,13 @@
+name: ror_cr
+version: 0.1.0
+
+authors:
+  - MAKIROR <gzanan@gmail.com>
+
+targets:
+  ror_cr:
+    main: src/ror_cr.cr
+
+crystal: 1.7.3
+
+license: MIT
