@@ -10,5 +10,4 @@ class State
     transitions[symbol] ||= Set(State).new
     transitions[symbol] << state
   end
-  
 end
