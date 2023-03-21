@@ -6,57 +6,66 @@ class NFAGraph
     @states = [] of State
   
     def initialize(regex : String)
-      @start, @end = build_nfa(regex)
+
+      start_state = State.new(0)
+      @states = [start_state]
+      @start = start_state
+
+      @end = build_nfa(regex)
+      puts @states
     end
   
-    def build_nfa(regex : String) : Tuple(State, State)
+    def build_nfa(regex : String) : State
       postfix = to_rpn(regex)
-      state_stack = [] of State
+      stack = @states
   
-      # Improve the process of building NFA
       postfix.each do |symbol|
         case symbol
-        when '.'
-          # todo
         when '*'
-          state = State.new(@states.size)
-          @states << state
-          prev_state = state_stack.pop
-          prev_state.add_transition('#', state)
-          state.add_transition('#', prev_state)
-          state_stack << state
+          state = stack.pop
+          new_state = State.new(-1)
+          new_state.add_transition('ε', state)
+          state.add_transition('ε', new_state)
+          stack << new_state
 
         when '|'
-          state = State.new(@states.size)
-          @states << state
-          second_state = state_stack.pop
-          first_state = state_stack.pop
-          state.add_transition('#', first_state)
-          state.add_transition('#', second_state)
-          state_stack << state
+          first_state = stack.pop
+          second_state = stack.pop
+          new_state = State.new(-1)
+          new_state.add_transition('ε', first_state)
+          new_state.add_transition('ε', second_state)
+          stack << new_state
 
-        when '#'
-          second_state = state_stack.pop
-          first_state = state_stack.pop
-          first_state.add_transition(symbol, second_state)
-          state_stack << second_state
+        when '.'
+          first_state = stack.pop
+          second_state = stack.pop
+
+          first_state.transitions.each do |symbol, target_states|
+            next if symbol == '.'
+            target_states.each do |target_state|
+              second_state.add_transition(symbol, target_state)
+            end
+          end
+        
+          second_state.add_transition('#', first_state)
+
+          stack << second_state
                     
         else
           state = State.new(@states.size)
-          @states << state
-          state_stack << state
-  
+
           if symbol == '\\'
             symbol = postfix.shift
           end
-  
-          prev_state = state_stack.pop
+    
+          prev_state = stack.pop
           prev_state.add_transition(symbol, state)
-          state_stack << state
+          stack << prev_state
+          stack << state
         end
       end
   
-      return state_stack.pop, state_stack.last
+      return stack.last
     end
 
 end
@@ -83,15 +92,18 @@ def to_rpn(regex : String) : Array(Char)
         end
         should_spliced = true
         i += 1
+
       when '('
         should_spliced = false
         stack.push(infix[i])
+
       when ')'
         should_spliced = false
         while stack.last != '('
             postfix << stack.pop
         end
         stack.pop
+
       when '|', '*', '.'
         should_spliced = false
         while !stack.empty? && stack.last != '(' && operators[stack.last] >= operators[infix[i]]
@@ -102,6 +114,7 @@ def to_rpn(regex : String) : Array(Char)
         else
           stack.push(infix[i])
         end
+
       else
         postfix << infix[i]
         if should_spliced == true && !stack.empty? && stack.last == '|'

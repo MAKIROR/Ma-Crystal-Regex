@@ -4,6 +4,5 @@ require "./fa/nfa_graph"
 module RorCr
   VERSION = "0.1.0"
 
-  regex = "(a|bc(d|ef))"
-  states = NFAGraph.new(regex)
+  states = NFAGraph.new("abc")
 end
