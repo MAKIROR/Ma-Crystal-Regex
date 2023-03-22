@@ -6,26 +6,18 @@ class State
     @transitions = Hash(Char, Set(State)).new
   end
 
+  def id_plus(n : Int32)
+    @id += n
+  end
+
   def add_transition(symbol : Char, state : State)
     @transitions[symbol] ||= Set(State).new
     @transitions[symbol] << state
   end
 
-  def epsilon_closure
-    closure = Set.new([self])
-    stack = [self]
-
-    until stack.empty?
-      state = stack.pop
-
-      state.transitions['ε']&.each do |target_state|
-        unless closure.include?(target_state)
-          closure.add(target_state)
-          stack.push(target_state)
-        end
-      end
+  def remove_transition(state : State)
+    @transitions.each do |symbol, states|
+      states.delete(state)
     end
-
-    closure
   end
 end

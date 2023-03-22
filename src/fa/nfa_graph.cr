@@ -6,7 +6,6 @@ class NFAGraph
     @states = [] of State
   
     def initialize(regex : String)
-
       start_state = State.new(0)
       @states = [start_state]
       @start = start_state
@@ -23,34 +22,50 @@ class NFAGraph
         case symbol
         when '*'
           state = stack.pop
-          new_state = State.new(-1)
+          new_state = State.new(@states.size)
           new_state.add_transition('ε', state)
           state.add_transition('ε', new_state)
           stack << new_state
 
         when '|'
+          # todo
           first_state = stack.pop
           second_state = stack.pop
-          new_state = State.new(-1)
+          new_state = State.new(@states.size)
+
           new_state.add_transition('ε', first_state)
           new_state.add_transition('ε', second_state)
+
           stack << new_state
+
+        when "#"
+          # todo
+          first_state = stack.pop
+          second_state = stack.pop
+
+          transitions = second_state.transitions['ε']
+          if transitions.nil?
+            second_state.add_transition('ε', first_state)
+          else
+            transitions = first_state
+          end
+
+          stack << second_state
 
         when '.'
           first_state = stack.pop
           second_state = stack.pop
 
-          first_state.transitions.each do |symbol, target_states|
-            next if symbol == '.'
+          first_state.transitions.each do |sym, target_states|
+            next if sym == '.'
             target_states.each do |target_state|
-              second_state.add_transition(symbol, target_state)
+              second_state.add_transition(sym, target_state)
             end
           end
         
-          second_state.add_transition('#', first_state)
-
+          second_state.add_transition('ε', first_state)
           stack << second_state
-                    
+  
         else
           state = State.new(@states.size)
 
@@ -74,7 +89,7 @@ def to_rpn(regex : String) : Array(Char)
     operators = {
         '|' => 0,
         '*' => 1,
-        '.' => 2
+        '#' => 2
     }
     infix = regex.chars
     postfix = [] of Char
@@ -114,7 +129,7 @@ def to_rpn(regex : String) : Array(Char)
         else
           stack.push(infix[i])
         end
-
+        
       else
         postfix << infix[i]
         if should_spliced == true && !stack.empty? && stack.last == '|'

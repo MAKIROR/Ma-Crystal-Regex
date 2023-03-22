@@ -4,5 +4,5 @@ require "./fa/nfa_graph"
 module RorCr
   VERSION = "0.1.0"
 
-  states = NFAGraph.new("abc")
+  states = NFAGraph.new("ab.c")
 end
