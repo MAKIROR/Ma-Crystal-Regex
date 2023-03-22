@@ -38,17 +38,13 @@ class NFAGraph
 
           stack << new_state
 
-        when "#"
+        when '#'
           # todo
           first_state = stack.pop
           second_state = stack.pop
 
-          transitions = second_state.transitions['ε']
-          if transitions.nil?
-            second_state.add_transition('ε', first_state)
-          else
-            transitions = first_state
-          end
+          second_state.remove_transition(first_state)
+          second_state.add_transition('#', first_state)
 
           stack << second_state
 
