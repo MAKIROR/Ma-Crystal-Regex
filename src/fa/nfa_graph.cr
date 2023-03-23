@@ -2,90 +2,68 @@ require "./nfa_state"
 
 class NFAGraph
     @start : State
-    @end : State
-    @states = [] of State
+    @accept_states : Set(State)
   
     def initialize(regex : String)
-      start_state = State.new(0)
-      @states = [start_state]
-      @start = start_state
-
-      @end = build_nfa(regex)
-      puts @states
+      #todo
+      
     end
-  
-    def build_nfa(regex : String) : State
-      postfix = to_rpn(regex)
-      stack = @states
-  
-      postfix.each do |symbol|
-        case symbol
-        when '*'
-          state = stack.pop
-          new_state = State.new(@states.size)
-          new_state.add_transition('ε', state)
-          state.add_transition('ε', new_state)
-          stack << new_state
 
-        when '|'
-          # todo
-          first_state = stack.pop
-          second_state = stack.pop
-          new_state = State.new(@states.size)
+    def new_from_states(start : State, accept_states : Set(State))
+      @start = start
+      @accept_states = accept_states
+    end
+end
 
-          new_state.add_transition('ε', first_state)
-          new_state.add_transition('ε', second_state)
+def build_nfa(regex : String) : NFAGraph
+  postfix = to_rpn(regex)
 
-          stack << new_state
+  start_state = State.new(0)
+  states = [start_state]
+  stack = [] of State
 
-        when '#'
-          # todo
-          first_state = stack.pop
-          second_state = stack.pop
+  postfix.each do |symbol|
+    case symbol
+    when '*'
+      state = stack.pop
+      new_state = State.new(states.size)
+      new_state.add_epsilon(state)
+      state.add_epsilon( new_state)
+      stack << new_state
 
-          second_state.remove_transition(first_state)
-          second_state.add_transition('#', first_state)
-
-          stack << second_state
-
-        when '.'
-          first_state = stack.pop
-          second_state = stack.pop
-
-          first_state.transitions.each do |sym, target_states|
-            next if sym == '.'
-            target_states.each do |target_state|
-              second_state.add_transition(sym, target_state)
-            end
-          end
-        
-          second_state.add_transition('ε', first_state)
-          stack << second_state
-  
-        else
-          state = State.new(@states.size)
-
-          if symbol == '\\'
-            symbol = postfix.shift
-          end
+    when '|'
+      first_state = stack.pop
+      second_state = stack.pop
+      
+      # todo
+    when '.'
+      first_state = stack.pop
+      second_state = stack.pop
     
-          prev_state = stack.pop
-          prev_state.add_transition(symbol, state)
-          stack << prev_state
-          stack << state
-        end
-      end
-  
-      return stack.last
-    end
+      second_state.add_epsilon(first_state)
+      stack << second_state
 
+    else
+      state = State.new(states.size)
+
+      if symbol == '\\'
+        symbol = postfix.shift
+      end
+
+      prev_state = stack.pop
+      prev_state.add_transition(symbol, state)
+      stack << prev_state
+      stack << state
+    end
+  end
+
+  return stack
 end
 
 def to_rpn(regex : String) : Array(Char)
     operators = {
         '|' => 0,
-        '*' => 1,
-        '#' => 2
+        '*' => 1
     }
     infix = regex.chars
     postfix = [] of Char
@@ -115,19 +93,20 @@ def to_rpn(regex : String) : Array(Char)
         end
         stack.pop
 
-      when '|', '*', '.'
+      when '|', '*'
         should_spliced = false
         while !stack.empty? && stack.last != '(' && operators[stack.last] >= operators[infix[i]]
           postfix << stack.pop
         end
-        if infix[i] == '.'
-          stack.push('#')
-        else
-          stack.push(infix[i])
-        end
+        stack.push(infix[i])
         
       else
-        postfix << infix[i]
+        if infix[i] == '.'
+          postfix << '#'
+        else
+          postfix << infix[i]
+        end
+
         if should_spliced == true && !stack.empty? && stack.last == '|'
           postfix << '.'
         end
@@ -141,4 +120,15 @@ def to_rpn(regex : String) : Array(Char)
 
     puts postfix
     return postfix
+end
+
+def union(first_state : State, second_state : State) : NFAGraph
+  start_state = State(0);
+  end_state = State(3)
+  first_state.add_epsilon(end_state)
+  second_state.add_epsilon(end_state)
+  start_state.add_epsilon(first_state)
+  start_state.add_epsilon(second_state)
+
+  return NFAGraph.new_from_states(second_state.start, first_state.accept_states)
 end
