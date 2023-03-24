@@ -17,10 +17,4 @@ class State
   def add_epsilon(state : State)
     @transitions['ε'] ||= state
   end
-
-  def remove_transition(state : State)
-    @transitions.each do |symbol, states|
-      states.delete(state)
-    end
-  end
 end

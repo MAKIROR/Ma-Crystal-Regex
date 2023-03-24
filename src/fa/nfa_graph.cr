@@ -1,62 +1,80 @@
 require "./nfa_state"
 
 class NFAGraph
-    @start : State
-    @accept_states : Set(State)
+    @start_state : State
+    @end_state : State
   
-    def initialize(regex : String)
+    #def initialize(regex : String)
       #todo
+      #states = build_nfa(regex)
+      #nfa = states.pop
       
+      #@start_state = nfa
+      #@end_state = nfa.end_state
+    #end
+
+    def initialize(start_state : State, end_state : State)
+      @start_state = start_state
+      @end_state = end_state
     end
 
-    def new_from_states(start : State, accept_states : Set(State))
-      @start = start
-      @accept_states = accept_states
+    def self.basic_nfa(symbol : Char) : NFAGraph
+      start_state = State.new(0)
+      end_state = State.new(1)
+      start_state.add_transition(symbol, end_state)
+
+      NFAGraph.nwe(start_state, end_state)
+    end
+
+    def kleene_closure()
+      start_state = State.new(0)
+      end_state = State.new(1)
+      start_state.add_epsilon(end_state)
+      end_state.add_epsilon(start_state)
+      @end_state.add_epsilon(start_state)
+    end
+
+    def append_epsilon(state : State)
+      @end_state.add_epsilon(state)
+      @end_state = state
     end
 end
 
-def build_nfa(regex : String) : NFAGraph
+def build_nfa(regex : String) : Array(State)
   postfix = to_rpn(regex)
 
   start_state = State.new(0)
-  states = [start_state]
-  stack = [] of State
+  stack = [] of NFAGraph
 
   postfix.each do |symbol|
     case symbol
     when '*'
       state = stack.pop
-      new_state = State.new(states.size)
-      new_state.add_epsilon(state)
-      state.add_epsilon( new_state)
-      stack << new_state
+      state.kleene_closure()
+      stack << state
 
     when '|'
-      first_state = stack.pop
-      second_state = stack.pop
-      
       # todo
     when '.'
-      first_state = stack.pop
-      second_state = stack.pop
+      pre_nfa = stack.pop
+      pre_nfa.append_epsilon(State.new(0))
     
-      second_state.add_epsilon(first_state)
-      stack << second_state
+      stack << pre_nfa
 
     else
-      state = State.new(states.size)
+      state = State.new(stack.size + 1)
 
       if symbol == '\\'
         symbol = postfix.shift
       end
 
-      prev_state = stack.pop
-      prev_state.add_transition(symbol, state)
-      stack << prev_state
-      stack << state
+      nfa = NFAGraph.basic_nfa(symbol)
+
+      stack << nfa
     end
   end
 
+  puts stack
   return stack
 end
 
@@ -122,13 +140,14 @@ def to_rpn(regex : String) : Array(Char)
     return postfix
 end
 
-def union(first_state : State, second_state : State) : NFAGraph
-  start_state = State(0);
-  end_state = State(3)
-  first_state.add_epsilon(end_state)
-  second_state.add_epsilon(end_state)
+def union(first_state : State, second_state : State) : State
+  #
+  start_state = State.new(0);
+  first_state.add_epsilon(second_state)
+
   start_state.add_epsilon(first_state)
   start_state.add_epsilon(second_state)
 
-  return NFAGraph.new_from_states(second_state.start, first_state.accept_states)
+  return start_state
 end
+
