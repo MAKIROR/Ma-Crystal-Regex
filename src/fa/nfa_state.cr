@@ -1,20 +1,17 @@
 class State
-  @id : Int32
-  property transitions : Hash(Char, State)
+  property transitions : Hash(Char, Set(State))
 
-  def initialize(@id : Int32)
-    @transitions = {} of Char => State
-  end
-
-  def id_plus(n : Int32)
-    @id += n
+  def initialize()
+    @transitions = {} of Char => Set(State)
   end
 
   def add_transition(symbol : Char, state : State)
-    @transitions[symbol] ||= state
+    @transitions[symbol] ||= Set(State).new
+    @transitions[symbol] << state
   end
 
   def add_epsilon(state : State)
-    @transitions['ε'] ||= state
+    @transitions['ε'] ||= Set(State).new
+    @transitions['ε'] << state
   end
 end
