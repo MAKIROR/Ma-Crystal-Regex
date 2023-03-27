@@ -10,10 +10,9 @@ class NFAGraph
     end
 
     def self.generate(regex : String) : NFAGraph
-      states = build_nfa(regex)
-      nfa = states.pop
+      nfa = build_nfa(regex)
 
-      return NFAGraph.new(nfa.start_state, nfa.end_states)
+      return nfa
     end
 
     def self.basic_nfa(symbol : Char) : NFAGraph
@@ -25,7 +24,7 @@ class NFAGraph
     end
 end
 
-def build_nfa(regex : String) : Array(NFAGraph)
+def build_nfa(regex : String) : NFAGraph
   postfix = to_rpn(regex)
 
   start_state = State.new()
@@ -35,7 +34,7 @@ def build_nfa(regex : String) : Array(NFAGraph)
     case symbol
     when '*'
       nfa = stack.pop
-      new_nfa = closure(nfa)
+      new_nfa = kleene_closure(nfa)
       
       stack << new_nfa
 
@@ -64,9 +63,16 @@ def build_nfa(regex : String) : Array(NFAGraph)
     end
   end
 
-  puts stack
-
-  return stack
+  if stack.size == 1
+    return stack.pop
+  else
+    final_nfa = stack.shift
+    stack.each do |nfa|
+      final_nfa = concat(final_nfa, nfa)
+    end
+  
+    return final_nfa
+  end
 end
 
 def to_rpn(regex : String) : Array(Char)
@@ -144,7 +150,7 @@ def union(first_nfa : NFAGraph, second_nfa : NFAGraph) : NFAGraph
   return NFAGraph.new(start_state, [accept_state])
 end
 
-def closure(nfa : NFAGraph) : NFAGraph
+def kleene_closure(nfa : NFAGraph) : NFAGraph
   start_state = State.new()
   accept_state = State.new()
   
