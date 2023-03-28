@@ -1,10 +1,11 @@
 require "./nfa_state"
+require "./dfa_graph"
 
 class NFAGraph
-    property start_state : State
-    property end_states : Array(State)
+    property start_state : NFAState
+    property end_states : Array(NFAState)
 
-    def initialize(start_state : State, end_states : Array(State))
+    def initialize(start_state : NFAState, end_states : Array(NFAState))
       @start_state = start_state
       @end_states = end_states
     end
@@ -16,8 +17,8 @@ class NFAGraph
     end
 
     def self.basic_nfa(symbol : Char) : NFAGraph
-      start_state = State.new()
-      end_states = State.new()
+      start_state = NFAState.new()
+      end_states = NFAState.new()
       start_state.add_transition(symbol, end_states)
 
       NFAGraph.new(start_state, [end_states])
@@ -27,7 +28,7 @@ end
 def build_nfa(regex : String) : NFAGraph
   postfix = to_rpn(regex)
 
-  start_state = State.new()
+  start_state = NFAState.new()
   stack = [] of NFAGraph
 
   postfix.each do |symbol|
@@ -138,8 +139,8 @@ def to_rpn(regex : String) : Array(Char)
 end
 
 def union(first_nfa : NFAGraph, second_nfa : NFAGraph) : NFAGraph
-  start_state = State.new()
-  accept_state = State.new()
+  start_state = NFAState.new()
+  accept_state = NFAState.new()
 
   start_state.add_epsilon(first_nfa.start_state)
   start_state.add_epsilon(second_nfa.start_state)
@@ -151,8 +152,8 @@ def union(first_nfa : NFAGraph, second_nfa : NFAGraph) : NFAGraph
 end
 
 def kleene_closure(nfa : NFAGraph) : NFAGraph
-  start_state = State.new()
-  accept_state = State.new()
+  start_state = NFAState.new()
+  accept_state = NFAState.new()
   
   start_state.add_epsilon(accept_state)
   start_state.add_epsilon(nfa.start_state)
