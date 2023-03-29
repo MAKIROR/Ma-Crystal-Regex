@@ -1,8 +1,10 @@
 class NFAState
   property transitions : Hash(Char, Set(NFAState))
+  property accept : Bool
 
   def initialize()
     @transitions = {} of Char => Set(NFAState)
+    @accept = false
   end
 
   def add_transition(symbol : Char, state : NFAState)

@@ -1,10 +1,10 @@
 # TODO: Write documentation for `RorCr`
-require "./fa/nfa_graph"
-require "./fa/dfa_graph"
+require "./regex"
 
 module RorCr
   VERSION = "0.1.0"
 
-  nfa = NFAGraph.generate("bc*")
-  puts [nfa]
+  re = MRegex.new("bc*")
+  r = re.match("bc")
+  puts [r]
 end

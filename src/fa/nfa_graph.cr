@@ -10,24 +10,50 @@ class NFAGraph
       @end_states = end_states
     end
 
-    def self.generate(regex : String) : NFAGraph
-      nfa = build_nfa(regex)
-
+    def self.generate(postfix : Array(Char)) : NFAGraph
+      nfa = build_nfa(postfix)
       return nfa
     end
 
     def self.basic_nfa(symbol : Char) : NFAGraph
       start_state = NFAState.new()
-      end_states = NFAState.new()
-      start_state.add_transition(symbol, end_states)
+      end_state = NFAState.new()
+      end_state.accept = true
+      start_state.add_transition(symbol, end_state)
 
-      NFAGraph.new(start_state, [end_states])
+      NFAGraph.new(start_state, [end_state])
+    end
+
+    def to_dfa() : DFAGraph
+      start_nfa_states = epsilon_closure(@start_state)
+      start_dfa_state = DFAState.new(start_nfa_states)
+      
+      dfa_graph = DFAGraph.new(start_state: start_dfa_state)
+      unmarked_dfa_states = [start_dfa_state]
+      
+      until unmarked_dfa_states.empty?
+        current_dfa_state = unmarked_dfa_states.shift
+        current_dfa_state.nfa_states.each do |nfa_state|
+          nfa_state.transitions.each do |symbol, next_nfa_states|
+            if symbol != 'ε' && !nfa_state.transitions.has_key?(symbol)
+              next
+            end
+            next_nfa_states.each do |next_nfa_state|
+              next_dfa_state_nfa_states = epsilon_closure(next_nfa_state)
+              next_dfa_state = dfa_graph.state_map.fetch(next_dfa_state_nfa_states) do
+                DFAState.new(next_dfa_state_nfa_states)
+              end
+              current_dfa_state.transitions[symbol] = next_dfa_state
+            end
+          end
+        end
+      end
+      
+      dfa_graph
     end
 end
 
-def build_nfa(regex : String) : NFAGraph
-  postfix = to_rpn(regex)
-
+def build_nfa(postfix : Array(Char)) : NFAGraph
   start_state = NFAState.new()
   stack = [] of NFAGraph
 
@@ -76,68 +102,6 @@ def build_nfa(regex : String) : NFAGraph
   end
 end
 
-def to_rpn(regex : String) : Array(Char)
-    operators = {
-        '|' => 0,
-        '*' => 1
-    }
-    infix = regex.chars
-    postfix = [] of Char
-    stack = [] of Char
-  
-    i = 0
-    should_spliced = false
-    while i < infix.size
-      case infix[i]
-      when '\\'
-        postfix << '\\'
-        postfix << infix[i+1]
-        if should_spliced == true 
-          postfix << '.'
-        end
-        should_spliced = true
-        i += 1
-
-      when '('
-        should_spliced = false
-        stack.push(infix[i])
-
-      when ')'
-        should_spliced = false
-        while stack.last != '('
-            postfix << stack.pop
-        end
-        stack.pop
-
-      when '|', '*'
-        should_spliced = false
-        while !stack.empty? && stack.last != '(' && operators[stack.last] >= operators[infix[i]]
-          postfix << stack.pop
-        end
-        stack.push(infix[i])
-        
-      else
-        if infix[i] == '.'
-          postfix << '#'
-        else
-          postfix << infix[i]
-        end
-
-        if should_spliced == true && !stack.empty? && stack.last == '|'
-          postfix << '.'
-        end
-        should_spliced = true
-      end
-      i += 1
-    end
-    while !stack.empty?
-      postfix << stack.pop
-    end
-
-    puts postfix
-    return postfix
-end
-
 def union(first_nfa : NFAGraph, second_nfa : NFAGraph) : NFAGraph
   start_state = NFAState.new()
   accept_state = NFAState.new()
@@ -166,4 +130,24 @@ end
 def concat(first_nfa, second_nfa) : NFAGraph
   first_nfa.end_states.last.add_epsilon(second_nfa.start_state)
   return NFAGraph.new(first_nfa.start_state, [second_nfa.end_states.last])
+end
+
+def epsilon_closure(nfa_state : NFAState) : Set(NFAState)
+  closure = Set(NFAState).new
+  closure << nfa_state
+  stack = [nfa_state]
+  
+  until stack.empty?
+    current_nfa_state = stack.pop
+    if current_nfa_state.transitions.has_key?('ε')
+      current_nfa_state.transitions['ε'].each do |next_nfa_state|
+        unless closure.includes?(next_nfa_state)
+          closure << next_nfa_state
+          stack << next_nfa_state
+        end
+      end
+    end
+  end
+  
+  closure
 end
