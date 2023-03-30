@@ -1,12 +1,12 @@
 require "./nfa_state"
 
 class DFAState
-    property nfa_states : Set(NFAState)
     property transitions : Hash(Char, DFAState)
+    property accepting : Bool
   
-    def initialize(nfa_states : Set(NFAState))
-      @nfa_states = nfa_states
+    def initialize()
       @transitions = {} of Char => DFAState
+      @accepting = false
     end
   
     def add_transition(symbol : Char, state : DFAState)

@@ -10,8 +10,19 @@ class MRegex
     end
 
     def match(input : String)
-        # todo
-        return false
+      current_state = @dfa.start_state
+      input.each_char.with_index do |char, i|
+        if current_state.transitions.has_key?(char)
+          current_state = current_state.transitions[char]
+        elsif current_state.transitions.has_key?("ε")
+          current_state = current_state.transitions["ε"]
+          next
+        else
+          puts 0
+          return false
+        end
+      end
+      current_state.accepting
     end
 end
 
