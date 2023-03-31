@@ -3,11 +3,11 @@ require "./dfa_graph"
 
 class NFAGraph
     property start_state : NFAState
-    property end_states : Array(NFAState)
+    property end_state : NFAState
 
-    def initialize(start_state : NFAState, end_states : Array(NFAState))
+    def initialize(start_state : NFAState, end_state : NFAState)
       @start_state = start_state
-      @end_states = end_states
+      @end_state = end_state
     end
 
     def self.generate(postfix : Array(Char)) : NFAGraph
@@ -21,16 +21,16 @@ class NFAGraph
       end_state.accepting = true
       start_state.add_transition(symbol, end_state)
 
-      NFAGraph.new(start_state, [end_state])
+      NFAGraph.new(start_state, end_state)
     end
 
     def to_dfa() : DFAGraph
       dfa_graph = DFAGraph.new(DFAState.new())
       unmarked_dfa_states = [@start_state]
       
-      until unmarked_dfa_states.empty?
-        current_dfa_state = unmarked_dfa_states.shift
+      while unmarked_dfa_states.empty?
         # todo
+        current_dfa_state = unmarked_dfa_states.shift
       end
       
       dfa_graph
@@ -94,10 +94,10 @@ def union(first_nfa : NFAGraph, second_nfa : NFAGraph) : NFAGraph
   start_state.add_epsilon(first_nfa.start_state)
   start_state.add_epsilon(second_nfa.start_state)
 
-  first_nfa.end_states.last.add_epsilon(accepting_state)
-  second_nfa.end_states.last.add_epsilon(accepting_state)
+  first_nfa.end_state.add_epsilon(accepting_state)
+  second_nfa.end_state.add_epsilon(accepting_state)
 
-  return NFAGraph.new(start_state, [accepting_state])
+  return NFAGraph.new(start_state, accepting_state)
 end
 
 def kleene_closure(nfa : NFAGraph) : NFAGraph
@@ -107,13 +107,33 @@ def kleene_closure(nfa : NFAGraph) : NFAGraph
   
   start_state.add_epsilon(accepting_state)
   start_state.add_epsilon(nfa.start_state)
-  nfa.end_states.last.add_epsilon(accepting_state)
-  nfa.end_states.last.add_epsilon(nfa.start_state)
+  nfa.end_state.add_epsilon(accepting_state)
+  nfa.end_state.add_epsilon(nfa.start_state)
 
-  return NFAGraph.new(start_state, [accepting_state])
+  return NFAGraph.new(start_state, accepting_state)
 end
 
 def concat(first_nfa, second_nfa) : NFAGraph
-  first_nfa.end_states.last.add_epsilon(second_nfa.start_state)
-  return NFAGraph.new(first_nfa.start_state, [second_nfa.end_states.last])
+  first_nfa.end_state.add_epsilon(second_nfa.start_state)
+  return NFAGraph.new(first_nfa.start_state, second_nfa.end_state)
+end
+
+def epsilon_closure(nfa_state : NFAState) : Set(NFAState)
+  closure = Set(NFAState).new
+  closure << nfa_state
+  stack = [nfa_state]
+
+  until stack.empty?
+    current_nfa_state = stack.pop
+    if current_nfa_state.transitions.has_key?('ε')
+      current_nfa_state.transitions['ε'].each do |next_nfa_state|
+        unless closure.includes?(next_nfa_state)
+          closure << next_nfa_state
+          stack << next_nfa_state
+        end
+      end
+    end
+  end
+
+  closure
 end
