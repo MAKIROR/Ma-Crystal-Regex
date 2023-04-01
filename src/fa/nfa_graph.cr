@@ -1,13 +1,14 @@
-require "./nfa_state"
 require "./dfa_graph"
 
 class NFAGraph
     property start_state : NFAState
     property end_state : NFAState
+    property symbols : Set(Char)
 
     def initialize(start_state : NFAState, end_state : NFAState)
       @start_state = start_state
       @end_state = end_state
+      @symbols = Set(Char).new
     end
 
     def self.generate(postfix : Array(Char)) : NFAGraph
@@ -23,12 +24,17 @@ class NFAGraph
 
       NFAGraph.new(start_state, end_state)
     end
+    
+    def set_symbols(symbols : Set(Char))
+      @symbols = symbols
+    end
 
     def to_dfa() : DFAGraph
-      dfa_graph = DFAGraph.new(DFAState.new())
+      dfa_graph = DFAGraph.new(DFAState.default())
       unmarked_dfa_states = [@start_state]
+      nfa_start_ec = @start_state.epsilon_closure()
       
-      while unmarked_dfa_states.empty?
+      while !unmarked_dfa_states.empty?
         # todo
         current_dfa_state = unmarked_dfa_states.shift
       end
@@ -40,6 +46,7 @@ end
 def build_nfa(postfix : Array(Char)) : NFAGraph
   start_state = NFAState.new()
   stack = [] of NFAGraph
+  symbols = Set(Char).new
 
   postfix.each do |symbol|
     case symbol
@@ -69,7 +76,7 @@ def build_nfa(postfix : Array(Char)) : NFAGraph
       end
 
       nfa = NFAGraph.basic_nfa(symbol)
-
+      symbols << symbol
       stack << nfa
     end
   end
@@ -82,6 +89,7 @@ def build_nfa(postfix : Array(Char)) : NFAGraph
       final_nfa = concat(final_nfa, nfa)
     end
   
+    final_nfa.set_symbols(symbols)
     return final_nfa
   end
 end
@@ -115,25 +123,6 @@ end
 
 def concat(first_nfa, second_nfa) : NFAGraph
   first_nfa.end_state.add_epsilon(second_nfa.start_state)
+  first_nfa.end_state.accepting = false
   return NFAGraph.new(first_nfa.start_state, second_nfa.end_state)
-end
-
-def epsilon_closure(nfa_state : NFAState) : Set(NFAState)
-  closure = Set(NFAState).new
-  closure << nfa_state
-  stack = [nfa_state]
-
-  until stack.empty?
-    current_nfa_state = stack.pop
-    if current_nfa_state.transitions.has_key?('ε')
-      current_nfa_state.transitions['ε'].each do |next_nfa_state|
-        unless closure.includes?(next_nfa_state)
-          closure << next_nfa_state
-          stack << next_nfa_state
-        end
-      end
-    end
-  end
-
-  closure
 end
