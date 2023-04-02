@@ -2,18 +2,37 @@ require "./nfa_state"
 
 class DFAState
     property transitions : Hash(Char, DFAState)
+    property nfa_states : Set(NFAState)
     property accepting : Bool
 
-    def initialize(transitions : Hash(Char, DFAState), accepting : Bool)
+    def initialize(transitions : Hash(Char, DFAState), nfa_states : Set(NFAState), accepting : Bool = false)
       @transitions = transitions
+      @nfa_states = nfa_states
       @accepting = accepting
     end
   
     def self.default() : DFAState
-      return DFAState.new(transitions: {} of Char => DFAState, accepting: false)
+      set = Set(NFAState).new
+      return DFAState.new({} of Char => DFAState, set, false)
+    end
+
+    def self.new_from_set(nfa_states : Set(NFAState)) : DFAState
+      dfa_state = DFAState.default()
+      dfa_state.nfa_states = nfa_states
+      return dfa_state
     end
   
     def add_transition(symbol : Char, state : DFAState)
       @transitions[symbol] = state
+    end
+
+    def epsilon_closure() : Set(NFAState)
+      closure = Set(NFAState).new
+  
+      nfa_states.each do |state|
+        closure += state.epsilon_closure
+      end
+  
+      closure
     end
 end

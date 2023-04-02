@@ -13,6 +13,7 @@ class NFAGraph
 
     def self.generate(postfix : Array(Char)) : NFAGraph
       nfa = build_nfa(postfix)
+      puts nfa.symbols
       return nfa
     end
 
@@ -30,17 +31,43 @@ class NFAGraph
     end
 
     def to_dfa() : DFAGraph
-      dfa_graph = DFAGraph.new(DFAState.default())
-      unmarked_dfa_states = [@start_state]
-      nfa_start_ec = @start_state.epsilon_closure()
-      
-      while !unmarked_dfa_states.empty?
-        # todo
-        current_dfa_state = unmarked_dfa_states.shift
+      dfa_start_state = DFAState.default()
+      nfa_start_states = @start_state.epsilon_closure()
+      unmarked = [nfa_start_states]
+      transition = {} of Set(NFAState) => DFAState
+      transition[nfa_start_states] = dfa_start_state
+
+      while !unmarked.empty?
+        current_nfa_states = unmarked.pop
+        current_dfa_state = transition[current_nfa_states]
+
+        @symbols.each do |symbol|
+          next_nfa_states = Set(NFAState).new
+          current_nfa_states.each do |nfa_state|
+            next_nfa_states += nfa_state.move(symbol)
+          end
+
+          if !next_nfa_states.empty?
+            if !transition.has_key?(next_nfa_states)
+              next_dfa_state = DFAState.default()
+              transition[next_nfa_states] = next_dfa_state
+              unmarked << next_nfa_states
+            end
+          end
+          current_dfa_state.transitions[symbol] = transition[next_nfa_states]
+        end
       end
+      return DFAGraph.new(dfa_start_state)
       
-      dfa_graph
     end
+end
+
+def epsilon_closure_set(states)
+  closure = states.dup
+  states.each do |state|
+    closure += state.epsilon_closure()
+  end
+  closure
 end
 
 def build_nfa(postfix : Array(Char)) : NFAGraph
