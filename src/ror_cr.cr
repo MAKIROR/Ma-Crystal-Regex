@@ -4,6 +4,6 @@ require "./regex"
 module RorCr
   VERSION = "0.1.0"
 
-  re = MRegex.new("(a|b)c.")
+  re = MRegex.new("a")
   puts [re]
 end
