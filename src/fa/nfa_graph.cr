@@ -13,7 +13,6 @@ class NFAGraph
 
     def self.generate(postfix : Array(Char)) : NFAGraph
       nfa = build_nfa(postfix)
-      puts nfa.symbols
       return nfa
     end
 
@@ -39,9 +38,10 @@ class NFAGraph
       dfa_start_state.accepting = nfa_start_states.any?(&.accepting)
 
       while !unmarked.empty?
+      #todo
         current_nfa_states = unmarked.pop
         current_dfa_state = transition[current_nfa_states]
-
+        
         @symbols.each do |symbol|
           next_nfa_states = Set(NFAState).new
           current_nfa_states.each do |nfa_state|
@@ -59,7 +59,8 @@ class NFAGraph
           current_dfa_state.transitions[symbol] = transition[next_nfa_states]
         end
       end
-      return DFAGraph.new(transition)
+      dfa = DFAGraph.new(dfa_start_state)
+      return dfa
     end
 end
 
@@ -110,16 +111,15 @@ def build_nfa(postfix : Array(Char)) : NFAGraph
   end
 
   if stack.size == 1
-    return stack.pop
+    final_nfa = stack.pop
   else
-    final_nfa = stack.shift
+    final_nfa = stack.pop
     stack.each do |nfa|
       final_nfa = concat(final_nfa, nfa)
     end
-  
-    final_nfa.set_symbols(symbols)
-    return final_nfa
   end
+  final_nfa.set_symbols(symbols)
+  return final_nfa
 end
 
 def union(first_nfa : NFAGraph, second_nfa : NFAGraph) : NFAGraph

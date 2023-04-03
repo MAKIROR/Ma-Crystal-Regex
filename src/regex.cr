@@ -6,7 +6,6 @@ class MRegex
     def initialize(regex : String)
         postfix = to_rpn(regex)
         nfa = NFAGraph.generate(postfix)
-        puts [nfa]
         @dfa = nfa.to_dfa()
     end
 
@@ -15,8 +14,8 @@ class MRegex
       input.each_char.with_index do |char, i|
         if current_state.transitions.has_key?(char)
           current_state = current_state.transitions[char]
-        elsif current_state.transitions.has_key?("ε")
-          current_state = current_state.transitions["ε"]
+        elsif current_state.transitions.has_key?('ε')
+          current_state = current_state.transitions['ε']
           next
         else
           puts 0
