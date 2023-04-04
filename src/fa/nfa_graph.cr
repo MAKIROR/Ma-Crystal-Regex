@@ -50,22 +50,29 @@ class NFAGraph
         
         @symbols.each do |symbol|
           next_nfa_states = Set(NFAState).new
+          accepting = false
           current_nfa_states.each do |nfa_state|
-            next_nfa_states += nfa_state.move(symbol)
+            states, accept = nfa_state.move(symbol)
+            next_nfa_states += states
+            if accept
+              accepting = true
+            end
           end
+          next_accepting = next_nfa_states.any?(&.accepting)
+          next_dfa_state = DFAState.default()
+          next_dfa_state.accepting ||= accepting
 
           if !next_nfa_states.empty?
             if !transition.has_key?(next_nfa_states)
-              next_dfa_state = DFAState.default()
-              next_dfa_state.accepting = next_nfa_states.any?(&.accepting)
               transition[next_nfa_states] = next_dfa_state
               unmarked << next_nfa_states
             else
               next_dfa_state = transition[next_nfa_states]
             end
             current_dfa_state.transitions[symbol] = transition[next_nfa_states]
+
           else
-            current_dfa_state.transitions[symbol] = DFAState.default()
+            current_dfa_state.transitions[symbol] = next_dfa_state
           end
           
         end

@@ -35,13 +35,17 @@ class NFAState
     closure
   end
   
-  def move(symbol : Char) : Set(NFAState)
+  def move(symbol : Char) : Tuple(Set(NFAState), Bool)
     next_states = Set(NFAState).new
+    accepting = false
     if @transitions.has_key?(symbol)
       @transitions[symbol].each do |state|
         next_states += state.epsilon_closure()
+        if state.accepting
+          accepting = true
+        end
       end
     end
-    next_states
+    {next_states, accepting}
   end
 end
