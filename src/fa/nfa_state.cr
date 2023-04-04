@@ -19,7 +19,6 @@ class NFAState
 
   def epsilon_closure() : Set(NFAState)
     closure = Set(NFAState).new
-    closure << self
     stack = [self]
   
     until stack.empty?
@@ -37,21 +36,12 @@ class NFAState
   end
   
   def move(symbol : Char) : Set(NFAState)
-    closure = Set(NFAState).new
-    closure << self
-    stack = [self]
-  
-    until stack.empty?
-      current_nfa_state = stack.pop
-      if current_nfa_state.transitions.has_key?(symbol)
-        current_nfa_state.transitions[symbol].each do |next_nfa_state|
-          unless closure.includes?(next_nfa_state)
-            closure << next_nfa_state
-            stack << next_nfa_state
-          end
-        end
+    next_states = Set(NFAState).new
+    if @transitions.has_key?(symbol)
+      @transitions[symbol].each do |state|
+        next_states += state.epsilon_closure()
       end
     end
-    closure
+    next_states
   end
 end

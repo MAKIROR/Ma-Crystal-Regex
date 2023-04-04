@@ -32,13 +32,19 @@ class NFAGraph
     def to_dfa() : DFAGraph
       dfa_start_state = DFAState.default()
       nfa_start_states = @start_state.epsilon_closure()
-      unmarked = [nfa_start_states]
       transition = {} of Set(NFAState) => DFAState
-      transition[nfa_start_states] = dfa_start_state
-      dfa_start_state.accepting = nfa_start_states.any?(&.accepting)
+
+      if nfa_start_states.empty?
+        start_state_set = Set(NFAState).new << @start_state.dup
+        unmarked = [start_state_set]
+        transition[start_state_set] = dfa_start_state
+      else
+        unmarked = [nfa_start_states]
+        transition[nfa_start_states] = dfa_start_state
+        dfa_start_state.accepting = nfa_start_states.any?(&.accepting)
+      end
 
       while !unmarked.empty?
-      #todo
         current_nfa_states = unmarked.pop
         current_dfa_state = transition[current_nfa_states]
         
@@ -54,12 +60,18 @@ class NFAGraph
               next_dfa_state.accepting = next_nfa_states.any?(&.accepting)
               transition[next_nfa_states] = next_dfa_state
               unmarked << next_nfa_states
+            else
+              next_dfa_state = transition[next_nfa_states]
             end
+            current_dfa_state.transitions[symbol] = transition[next_nfa_states]
+          else
+            current_dfa_state.transitions[symbol] = DFAState.default()
           end
-          current_dfa_state.transitions[symbol] = transition[next_nfa_states]
+          
         end
       end
       dfa = DFAGraph.new(dfa_start_state)
+      puts [dfa]
       return dfa
     end
 end
@@ -113,7 +125,7 @@ def build_nfa(postfix : Array(Char)) : NFAGraph
   if stack.size == 1
     final_nfa = stack.pop
   else
-    final_nfa = stack.pop
+    final_nfa = stack.shift
     stack.each do |nfa|
       final_nfa = concat(final_nfa, nfa)
     end
