@@ -4,5 +4,5 @@ require "./regex"
 module RorCr
   VERSION = "0.1.0"
 
-  re = MRegex.new("a|b")
+  re = MRegex.new("a*")
 end

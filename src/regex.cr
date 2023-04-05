@@ -7,6 +7,7 @@ class MRegex
         postfix = to_rpn(regex)
         nfa = NFAGraph.generate(postfix)
         @dfa = nfa.to_dfa()
+        @dfa.minimize()
     end
 
     def match(input : String)

@@ -20,7 +20,7 @@ class DFAState
       dfa_state = DFAState.default()
       dfa_state.nfa_states = nfa_states
       return dfa_state
-    end
+    end 
   
     def add_transition(symbol : Char, state : DFAState)
       @transitions[symbol] = state

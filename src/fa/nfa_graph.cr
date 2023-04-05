@@ -44,6 +44,10 @@ class NFAGraph
         dfa_start_state.accepting = nfa_start_states.any?(&.accepting)
       end
 
+      dfa_states = Set(DFAState).new
+      dfa_states << dfa_start_state
+      puts unmarked
+
       while !unmarked.empty?
         current_nfa_states = unmarked.pop
         current_dfa_state = transition[current_nfa_states]
@@ -74,10 +78,10 @@ class NFAGraph
           else
             current_dfa_state.transitions[symbol] = next_dfa_state
           end
-          
+          dfa_states << next_dfa_state
         end
       end
-      dfa = DFAGraph.new(dfa_start_state)
+      dfa = DFAGraph.new(dfa_start_state, dfa_states)
       puts [dfa]
       return dfa
     end
