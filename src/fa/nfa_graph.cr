@@ -46,7 +46,6 @@ class NFAGraph
 
       dfa_states = Set(DFAState).new
       dfa_states << dfa_start_state
-      puts unmarked
 
       while !unmarked.empty?
         current_nfa_states = unmarked.pop
@@ -82,7 +81,6 @@ class NFAGraph
         end
       end
       dfa = DFAGraph.new(dfa_start_state, dfa_states)
-      puts [dfa]
       return dfa
     end
 end
