@@ -29,31 +29,16 @@ class DFAGraph
     new_states = partitions.map do |partition|
       state = partition.first
       new_transitions = {} of Char => DFAState
-      new_transitions = state.transitions.map do |input, transition_state|
-        partition_for_state = partitions.find! { |p| p.includes?(transition_state) } || [] of DFAState
-        [input.as(Char), partition_for_state.first.as(DFAState)]
-      end.to_h
+      state.transitions.each do |input, transition_state|
+        partition_for_state = partitions.find! { |p| p.includes?(transition_state) } || Set(DFAState).new
+        new_transitions[input.as(Char)] = partition_for_state.first.as(DFAState)
+      end
       set = Set(NFAState).new
       DFAState.new({} of Char => DFAState, set, partition.any?(&.accepting)).tap do |new_state|
         new_state.transitions = new_transitions
       end
     end
 
-    reachable_states = [start_state]
-    queue = [start_state]
-
-    until queue.empty?
-      current_state = queue.shift
-      current_state.transitions.values.each do |next_state|
-        next unless @states.includes?(next_state)
-        next if reachable_states.includes?(next_state)
-        reachable_states << next_state
-        queue << next_state
-      end
-    end
-
-    @start_state = reachable_states.first
-    @states = reachable_states
   end
 
 end

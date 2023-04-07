@@ -122,7 +122,7 @@ def build_nfa(postfix : Array(Char)) : NFAGraph
 
     else
       if symbol == '\\'
-        symbol = postfix.shift
+        symbol = postfix.pop
       end
 
       nfa = NFAGraph.basic_nfa(symbol)
@@ -147,6 +147,8 @@ def union(first_nfa : NFAGraph, second_nfa : NFAGraph) : NFAGraph
   start_state = NFAState.new()
   accepting_state = NFAState.new()
   accepting_state.accepting = true
+  first_nfa.end_state.accepting = false
+  second_nfa.end_state.accepting = false
 
   start_state.add_epsilon(first_nfa.start_state)
   start_state.add_epsilon(second_nfa.start_state)
