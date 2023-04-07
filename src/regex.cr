@@ -18,9 +18,6 @@ class MRegex
           current_state = current_state.transitions[char]
         elsif current_state.transitions.has_key?('#')
           current_state = current_state.transitions['#']
-        elsif current_state.transitions.has_key?('ε')
-          current_state = current_state.transitions['ε']
-          next
         else
           return false
         end
