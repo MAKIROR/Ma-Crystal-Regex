@@ -36,6 +36,7 @@ class NFAGraph
 
       if nfa_start_states.empty?
         start_state_set = Set(NFAState).new << @start_state.dup
+        dfa_start_state.accepting = @start_state.accepting
         unmarked = [start_state_set]
         transition[start_state_set] = dfa_start_state
       else
@@ -61,9 +62,9 @@ class NFAGraph
               accepting = true
             end
           end
-          next_accepting = next_nfa_states.any?(&.accepting)
+          next_accepting = next_nfa_states.any?(&.accepting) || epsilon_closure_set(next_nfa_states).any?(&.accepting)
           next_dfa_state = DFAState.default()
-          next_dfa_state.accepting ||= accepting
+          next_dfa_state.accepting ||= next_accepting
 
           if !next_nfa_states.empty?
             if !transition.has_key?(next_nfa_states)
@@ -85,14 +86,6 @@ class NFAGraph
     end
 end
 
-def epsilon_closure_set(states)
-  closure = states.dup
-  states.each do |state|
-    closure += state.epsilon_closure()
-  end
-  closure
-end
-
 def build_nfa(postfix : Array(Char)) : NFAGraph
   start_state = NFAState.new()
   stack = [] of NFAGraph
@@ -103,6 +96,18 @@ def build_nfa(postfix : Array(Char)) : NFAGraph
     when '*'
       nfa = stack.pop
       new_nfa = kleene_closure(nfa)
+      
+      stack << new_nfa
+
+    when '+'
+      nfa = stack.pop
+      new_nfa = positive_closure(nfa)
+      
+      stack << new_nfa
+
+    when '?'
+      nfa = stack.pop
+      new_nfa = non_negative_closure(nfa)
       
       stack << new_nfa
 
@@ -143,6 +148,23 @@ def build_nfa(postfix : Array(Char)) : NFAGraph
   return final_nfa
 end
 
+def epsilon_closure_set(states : Set(NFAState)) : Set(NFAState)
+  closure = states.dup
+  stack = states.to_a
+
+  while !stack.empty?
+    current_state = stack.pop
+    current_state.epsilon_closure().each do |next_state|
+      if !closure.includes?(next_state)
+        closure << next_state
+        stack << next_state
+      end
+    end
+  end
+
+  return closure
+end
+
 def union(first_nfa : NFAGraph, second_nfa : NFAGraph) : NFAGraph
   start_state = NFAState.new()
   accepting_state = NFAState.new()
@@ -168,6 +190,28 @@ def kleene_closure(nfa : NFAGraph) : NFAGraph
   start_state.add_epsilon(nfa.start_state)
   nfa.end_state.add_epsilon(accepting_state)
   nfa.end_state.add_epsilon(nfa.start_state)
+
+  return NFAGraph.new(start_state, accepting_state)
+end
+
+def positive_closure(nfa : NFAGraph) : NFAGraph
+  next_nfa = nfa.dup
+  nfa.end_state.accepting = false
+  next_nfa.end_state.accepting = true
+  nfa.end_state.add_epsilon(next_nfa.start_state)
+  next_nfa.end_state.add_epsilon(next_nfa.start_state)
+  
+  return NFAGraph.new(nfa.start_state, next_nfa.end_state)
+end
+
+def non_negative_closure(nfa : NFAGraph) : NFAGraph
+  start_state = NFAState.new()
+  accepting_state = NFAState.new()
+  accepting_state.accepting = true
+  
+  start_state.add_epsilon(accepting_state)
+  start_state.add_epsilon(nfa.start_state)
+  nfa.end_state.add_epsilon(accepting_state)
 
   return NFAGraph.new(start_state, accepting_state)
 end

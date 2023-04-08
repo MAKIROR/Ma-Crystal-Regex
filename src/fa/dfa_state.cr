@@ -25,14 +25,4 @@ class DFAState
     def add_transition(symbol : Char, state : DFAState)
       @transitions[symbol] = state
     end
-
-    def epsilon_closure() : Set(NFAState)
-      closure = Set(NFAState).new
-  
-      nfa_states.each do |state|
-        closure += state.epsilon_closure
-      end
-  
-      closure
-    end
 end

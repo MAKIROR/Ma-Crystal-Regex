@@ -1,66 +1,68 @@
 require "./fa/*"
 
 class MRegex
-    @dfa : DFAGraph
+  @dfa : DFAGraph
     
-    def initialize(regex : String)
-        postfix = to_rpn(regex)
-        nfa = NFAGraph.generate(postfix)
+  def initialize(regex : String)
+      postfix = MRegex.to_rpn(regex)
+      nfa = NFAGraph.generate(postfix)
 
-        @dfa = nfa.to_dfa()
-        puts [@dfa.start_state]
-    end
+      @dfa = nfa.to_dfa()
+      puts postfix
+      puts [@dfa.start_state]
+  end
 
-    def match(input : String)
-      current_state = @dfa.start_state
-      input.each_char.with_index do |char, _|
-        if current_state.transitions.has_key?(char)
-          current_state = current_state.transitions[char]
-        elsif current_state.transitions.has_key?('#')
-          current_state = current_state.transitions['#']
-        else
-          return false
-        end
+  def match(input : String)
+    current_state = @dfa.start_state
+    input.each_char.with_index do |char, _|
+      if current_state.transitions.has_key?(char)
+        current_state = current_state.transitions[char]
+      elsif current_state.transitions.has_key?('#')
+        current_state = current_state.transitions['#']
+      else
+        return false
       end
-      current_state.accepting
     end
-end
+    current_state.accepting
+  end
 
-def to_rpn(regex : String) : Array(Char)
+  def self.to_rpn(regex : String) : Array(Char)
     operators = {
         '|' => 0,
-        '*' => 1
+        '*' => 1,
+        '+' => 1,
+        '?' => 1,
     }
     infix = regex.chars
     postfix = [] of Char
     stack = [] of Char
   
     i = 0
-    should_spliced = false
+    should_splice = false
     while i < infix.size
       case infix[i]
       when '\\'
         postfix << '\\'
         postfix << infix[i+1]
-        if should_spliced == true 
+        if should_splice == true 
           postfix << '.'
         end
-        should_spliced = true
+        should_splice = true
         i += 1
 
       when '('
-        should_spliced = false
+        should_splice = false
         stack.push(infix[i])
 
       when ')'
-        should_spliced = false
+        should_splice = false
         while stack.last != '('
-            postfix << stack.pop
+          postfix << stack.pop
         end
         stack.pop
 
-      when '|', '*'
-        should_spliced = false
+      when '|', '*', '+', '?'
+        should_splice = false
         while !stack.empty? && stack.last != '(' && operators[stack.last] >= operators[infix[i]]
           postfix << stack.pop
         end
@@ -73,10 +75,10 @@ def to_rpn(regex : String) : Array(Char)
           postfix << infix[i]
         end
 
-        if should_spliced == true && !stack.empty? && stack.last == '('
+        if should_splice == true && !stack.empty? && stack.last == '('
           postfix << '.'
         end
-        should_spliced = true
+        should_splice = true
       end
       i += 1
     end
@@ -85,4 +87,5 @@ def to_rpn(regex : String) : Array(Char)
     end
 
     return postfix
+  end
 end

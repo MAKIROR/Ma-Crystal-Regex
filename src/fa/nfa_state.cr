@@ -25,10 +25,8 @@ class NFAState
       current_nfa_state = stack.pop
       if current_nfa_state.transitions.has_key?('ε')
         current_nfa_state.transitions['ε'].each do |next_nfa_state|
-          unless closure.includes?(next_nfa_state)
-            closure << next_nfa_state
-            stack << next_nfa_state
-          end
+          closure << next_nfa_state
+          stack << next_nfa_state
         end
       end
     end
