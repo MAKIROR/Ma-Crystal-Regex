@@ -6,7 +6,6 @@ class MRegex
   def initialize(regex : String)
       postfix = MRegex.to_rpn(regex)
       nfa = NFAGraph.generate(postfix)
-      puts postfix
       @dfa = nfa.to_dfa()
   end
 

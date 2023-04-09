@@ -49,13 +49,10 @@ class NFAGraph
           current_nfa_states.each do |nfa_state|
             states, accept = nfa_state.move(symbol)
             next_nfa_states += states
-            if accept
-              accepting = true
-            end
+            accepting ||= accept
           end
-          next_accepting = next_nfa_states.any?(&.accepting) || epsilon_closure_set(next_nfa_states).any?(&.accepting)
           next_dfa_state = DFAState.default()
-          next_dfa_state.accepting ||= next_accepting
+          next_dfa_state.accepting ||= accepting || epsilon_closure_set(next_nfa_states).any?(&.accepting)
 
           if !next_nfa_states.empty?
             if !transition.has_key?(next_nfa_states)
@@ -196,13 +193,9 @@ def kleene_closure(nfa : NFAGraph) : NFAGraph
 end
 
 def positive_closure(nfa : NFAGraph) : NFAGraph
-  next_nfa = nfa.dup
-  nfa.end_state.accepting = false
-  next_nfa.end_state.accepting = true
-  nfa.end_state.add_epsilon(next_nfa.start_state)
-  next_nfa.end_state.add_epsilon(next_nfa.start_state)
+  nfa.end_state.add_epsilon(nfa.start_state)
   
-  return NFAGraph.new(nfa.start_state, next_nfa.end_state)
+  return nfa
 end
 
 def non_negative_closure(nfa : NFAGraph) : NFAGraph

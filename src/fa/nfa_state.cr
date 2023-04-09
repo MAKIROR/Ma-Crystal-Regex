@@ -39,9 +39,7 @@ class NFAState
     if @transitions.has_key?(symbol)
       @transitions[symbol].each do |state|
         next_states += state.epsilon_closure()
-        if state.accepting
-          accepting = true
-        end
+        accepting ||= state.accepting
       end
     end
 
@@ -50,12 +48,11 @@ class NFAState
         state.transitions[symbol].each do |state|
           next_states << state
           if state.accepting
-            accepting = true
+            accepting ||= true
           end
         end
       end
     end
-
     {next_states, accepting}
   end
 end
