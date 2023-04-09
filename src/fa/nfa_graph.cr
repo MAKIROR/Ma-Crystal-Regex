@@ -75,12 +75,13 @@ class NFAGraph
 end
 
 def build_nfa(postfix : Array(Char)) : NFAGraph
-  start_state = NFAState.new()
+
   stack = [] of NFAGraph
   symbols = Set(Char).new
 
-  postfix.each do |symbol|
-    case symbol
+  i = 0
+  while i < postfix.size
+    case postfix[i]
     when '*'
       nfa = stack.pop
       new_nfa = kleene_closure(nfa)
@@ -95,7 +96,7 @@ def build_nfa(postfix : Array(Char)) : NFAGraph
 
     when '?'
       nfa = stack.pop
-      new_nfa = non_negative_closure(nfa)
+      new_nfa = question_mark_closure(nfa)
       
       stack << new_nfa
 
@@ -113,15 +114,19 @@ def build_nfa(postfix : Array(Char)) : NFAGraph
     
       stack << new_nfa
 
-    else
-      if symbol == '\\'
-        symbol = postfix.pop
-      end
-
+    when '\\'
+      symbol = postfix[i + 1]
       nfa = basic_nfa(symbol)
       symbols << symbol
       stack << nfa
+      i += 1
+
+    else
+      nfa = basic_nfa(postfix[i])
+      symbols << postfix[i]
+      stack << nfa
     end
+    i += 1
   end
 
   if stack.size == 1
@@ -193,12 +198,19 @@ def kleene_closure(nfa : NFAGraph) : NFAGraph
 end
 
 def positive_closure(nfa : NFAGraph) : NFAGraph
-  nfa.end_state.add_epsilon(nfa.start_state)
-  
-  return nfa
+  start_state = NFAState.new()
+  accepting_state = NFAState.new()
+  accepting_state.accepting = true
+  nfa.end_state.accepting = false
+
+  start_state.add_epsilon(nfa.start_state)
+  nfa.end_state.add_epsilon(accepting_state)
+  accepting_state.add_epsilon(start_state)
+
+  return NFAGraph.new(start_state, accepting_state)
 end
 
-def non_negative_closure(nfa : NFAGraph) : NFAGraph
+def question_mark_closure(nfa : NFAGraph) : NFAGraph
   start_state = NFAState.new()
   accepting_state = NFAState.new()
   nfa.end_state.accepting = false

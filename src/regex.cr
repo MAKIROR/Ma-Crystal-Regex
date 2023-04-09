@@ -78,11 +78,12 @@ class MRegex
         should_splice = true
       end
       i += 1
+
     end
+
     while !stack.empty?
       postfix << stack.pop
     end
-
     return postfix
   end
 end
