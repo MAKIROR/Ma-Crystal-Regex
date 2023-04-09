@@ -6,10 +6,8 @@ class MRegex
   def initialize(regex : String)
       postfix = MRegex.to_rpn(regex)
       nfa = NFAGraph.generate(postfix)
-
-      @dfa = nfa.to_dfa()
       puts postfix
-      puts [@dfa.start_state]
+      @dfa = nfa.to_dfa()
   end
 
   def match(input : String)

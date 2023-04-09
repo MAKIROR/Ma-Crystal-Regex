@@ -15,15 +15,6 @@ class NFAGraph
       nfa = build_nfa(postfix)
       return nfa
     end
-
-    def self.basic_nfa(symbol : Char) : NFAGraph
-      start_state = NFAState.new()
-      end_state = NFAState.new()
-      end_state.accepting = true
-      start_state.add_transition(symbol, end_state)
-
-      NFAGraph.new(start_state, end_state)
-    end
     
     def set_symbols(symbols : Set(Char))
       @symbols = symbols
@@ -130,7 +121,7 @@ def build_nfa(postfix : Array(Char)) : NFAGraph
         symbol = postfix.pop
       end
 
-      nfa = NFAGraph.basic_nfa(symbol)
+      nfa = basic_nfa(symbol)
       symbols << symbol
       stack << nfa
     end
@@ -165,6 +156,15 @@ def epsilon_closure_set(states : Set(NFAState)) : Set(NFAState)
   return closure
 end
 
+def basic_nfa(symbol : Char) : NFAGraph
+  start_state = NFAState.new()
+  end_state = NFAState.new()
+  end_state.accepting = true
+  start_state.add_transition(symbol, end_state)
+
+  NFAGraph.new(start_state, end_state)
+end
+
 def union(first_nfa : NFAGraph, second_nfa : NFAGraph) : NFAGraph
   start_state = NFAState.new()
   accepting_state = NFAState.new()
@@ -185,6 +185,7 @@ def kleene_closure(nfa : NFAGraph) : NFAGraph
   start_state = NFAState.new()
   accepting_state = NFAState.new()
   accepting_state.accepting = true
+  nfa.end_state.accepting = false
   
   start_state.add_epsilon(accepting_state)
   start_state.add_epsilon(nfa.start_state)
@@ -207,6 +208,7 @@ end
 def non_negative_closure(nfa : NFAGraph) : NFAGraph
   start_state = NFAState.new()
   accepting_state = NFAState.new()
+  nfa.end_state.accepting = false
   accepting_state.accepting = true
   
   start_state.add_epsilon(accepting_state)

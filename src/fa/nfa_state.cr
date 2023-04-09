@@ -44,6 +44,18 @@ class NFAState
         end
       end
     end
+
+    self.epsilon_closure().each do |state|
+      if state.transitions.has_key?(symbol)
+        state.transitions[symbol].each do |state|
+          next_states << state
+          if state.accepting
+            accepting = true
+          end
+        end
+      end
+    end
+
     {next_states, accepting}
   end
 end
