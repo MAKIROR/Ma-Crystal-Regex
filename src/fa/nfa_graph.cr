@@ -114,16 +114,14 @@ def build_nfa(postfix : Array(Char)) : NFAGraph
     
       stack << new_nfa
 
-    when '\\'
-      symbol = postfix[i + 1]
+    else
+      symbol = postfix[i]
+      if postfix[i] == '\\'
+        symbol = postfix[i + 1]
+        i += 1
+      end
       nfa = basic_nfa(symbol)
       symbols << symbol
-      stack << nfa
-      i += 1
-
-    else
-      nfa = basic_nfa(postfix[i])
-      symbols << postfix[i]
       stack << nfa
     end
     i += 1
