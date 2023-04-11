@@ -22,19 +22,12 @@ class NFAGraph
 
     def to_dfa() : DFAGraph
       dfa_start_state = DFAState.default()
-      nfa_start_states = @start_state.epsilon_closure()
       transition = {} of Set(NFAState) => DFAState
 
-      if nfa_start_states.empty?
-        start_state_set = Set(NFAState).new << @start_state.dup
-        dfa_start_state.accepting = @start_state.accepting
-        unmarked = [start_state_set]
-        transition[start_state_set] = dfa_start_state
-      else
-        unmarked = [nfa_start_states]
-        transition[nfa_start_states] = dfa_start_state
-        dfa_start_state.accepting = nfa_start_states.any?(&.accepting)
-      end
+      nfa_start_states, dfa_start_state.accepting = @start_state.epsilon_closure()
+      unmarked = [nfa_start_states]
+      transition[nfa_start_states] = dfa_start_state
+
 
       dfa_states = Set(DFAState).new
       dfa_states << dfa_start_state
@@ -52,7 +45,7 @@ class NFAGraph
             accepting ||= accept
           end
           next_dfa_state = DFAState.default()
-          next_dfa_state.accepting ||= accepting || epsilon_closure_set(next_nfa_states).any?(&.accepting)
+          next_dfa_state.accepting ||= accepting
 
           if !next_nfa_states.empty?
             if !transition.has_key?(next_nfa_states)
@@ -131,29 +124,13 @@ def build_nfa(postfix : Array(Char)) : NFAGraph
     final_nfa = stack.pop
   else
     final_nfa = stack.shift
+
     stack.each do |nfa|
       final_nfa = concat(final_nfa, nfa)
     end
   end
   final_nfa.set_symbols(symbols)
   return final_nfa
-end
-
-def epsilon_closure_set(states : Set(NFAState)) : Set(NFAState)
-  closure = states.dup
-  stack = states.to_a
-
-  while !stack.empty?
-    current_state = stack.pop
-    current_state.epsilon_closure().each do |next_state|
-      if !closure.includes?(next_state)
-        closure << next_state
-        stack << next_state
-      end
-    end
-  end
-
-  return closure
 end
 
 def basic_nfa(symbol : Char) : NFAGraph
@@ -221,7 +198,7 @@ def question_mark_closure(nfa : NFAGraph) : NFAGraph
   return NFAGraph.new(start_state, accepting_state)
 end
 
-def concat(first_nfa, second_nfa) : NFAGraph
+def concat(first_nfa : NFAGraph, second_nfa : NFAGraph) : NFAGraph
   first_nfa.end_state.add_epsilon(second_nfa.start_state)
   first_nfa.end_state.accepting = false
   return NFAGraph.new(first_nfa.start_state, second_nfa.end_state)

@@ -7,6 +7,7 @@ class MRegex
       postfix = MRegex.to_rpn(regex)
       nfa = NFAGraph.generate(postfix)
       @dfa = nfa.to_dfa()
+      puts [@dfa.start_state]
   end
 
   def match(input : String)
@@ -66,6 +67,7 @@ class MRegex
         stack.push(infix[i])
         
       else
+
         if infix[i] == '.'
           postfix << '#'
         else

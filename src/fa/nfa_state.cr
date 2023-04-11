@@ -17,9 +17,11 @@ class NFAState
     @transitions['ε'] << state
   end
 
-  def epsilon_closure() : Set(NFAState)
+  def epsilon_closure() : Tuple(Set(NFAState), Bool)
     closure = Set(NFAState).new
     stack = [self]
+    closure << self
+    accepting = self.accepting
   
     until stack.empty?
       current_nfa_state = stack.pop
@@ -27,32 +29,28 @@ class NFAState
         current_nfa_state.transitions['ε'].each do |next_nfa_state|
           closure << next_nfa_state
           stack << next_nfa_state
+          accepting ||= next_nfa_state.accepting
         end
       end
     end
-    closure
+    {closure, accepting}
   end
   
   def move(symbol : Char) : Tuple(Set(NFAState), Bool)
     next_states = Set(NFAState).new
-    accepting = false
-    if @transitions.has_key?(symbol)
-      @transitions[symbol].each do |state|
-        next_states += state.epsilon_closure()
-        accepting ||= state.accepting
-      end
-    end
-
-    self.epsilon_closure().each do |state|
+    states, states_accept = self.epsilon_closure()
+    accepting = states_accept
+    
+    states.each do |state|
       if state.transitions.has_key?(symbol)
         state.transitions[symbol].each do |state|
-          next_states << state
-          if state.accepting
-            accepting ||= true
-          end
+          target_states, accept = state.epsilon_closure()
+          next_states += target_states
+          accepting ||= accept
         end
       end
     end
+    
     {next_states, accepting}
   end
 end
