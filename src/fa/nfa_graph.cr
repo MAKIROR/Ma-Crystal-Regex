@@ -24,7 +24,7 @@ class NFAGraph
       dfa_start_state = DFAState.default()
       transition = {} of Set(NFAState) => DFAState
 
-      nfa_start_states, dfa_start_state.accepting = @start_state.epsilon_closure()
+      nfa_start_states = Set(NFAState).new << @start_state
       unmarked = [nfa_start_states]
       transition[nfa_start_states] = dfa_start_state
 
@@ -54,11 +54,8 @@ class NFAGraph
             else
               next_dfa_state = transition[next_nfa_states]
             end
-            current_dfa_state.transitions[symbol] = transition[next_nfa_states]
-
-          else
-            current_dfa_state.transitions[symbol] = next_dfa_state
           end
+          current_dfa_state.transitions[symbol] = next_dfa_state
           dfa_states << next_dfa_state
         end
       end
