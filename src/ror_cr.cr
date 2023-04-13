@@ -4,9 +4,9 @@ require "./regex"
 module RorCr
   VERSION = "0.1.0"
 
-  re = MRegex.new("(a|b)*c")
-  puts re.match("aac")
+  re = MRegex.new("(a|b)")
+  puts re.match("ab")
+  puts re.match("ac")
   puts re.match("a")
   puts re.match("b")
-  puts re.match("c")
 end

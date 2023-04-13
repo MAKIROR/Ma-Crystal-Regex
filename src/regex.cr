@@ -8,7 +8,6 @@ class MRegex
       nfa = NFAGraph.generate(postfix)
       @dfa = nfa.to_dfa()
       @dfa.minimize()
-      puts postfix
   end
 
   def match(input : String)

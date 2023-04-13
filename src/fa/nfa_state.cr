@@ -21,7 +21,7 @@ class NFAState
     closure = Set(NFAState).new
     stack = [self]
     closure << self
-    accepting = self.accepting
+    accepting = false
   
     until stack.empty?
       current_nfa_state = stack.pop
@@ -38,8 +38,8 @@ class NFAState
   
   def move(symbol : Char) : Tuple(Set(NFAState), Bool)
     next_states = Set(NFAState).new
-    states, states_accept = self.epsilon_closure()
-    accepting = states_accept
+    states, _ = self.epsilon_closure()
+    accepting = false
     
     states.each do |state|
       if state.transitions.has_key?(symbol)
