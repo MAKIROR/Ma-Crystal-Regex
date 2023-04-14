@@ -8,10 +8,6 @@ class MRegex
       nfa = NFAGraph.generate(postfix)
       @dfa = nfa.to_dfa()
       @dfa.minimize()
-
-      puts [@dfa.states.size]
-      puts [@dfa.start_state]
-
   end
 
   def match(input : String)

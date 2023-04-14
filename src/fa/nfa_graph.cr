@@ -59,7 +59,7 @@ class NFAGraph
           dfa_states << next_dfa_state
         end
       end
-      dfa = DFAGraph.new(dfa_start_state, dfa_states, @symbols.dup)
+      dfa = DFAGraph.new(dfa_start_state, dfa_states)
       return dfa
     end
 end

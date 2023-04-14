@@ -3,18 +3,16 @@ require "./dfa_state"
 class DFAGraph
   property start_state : DFAState
   property states : Set(DFAState)
-  @symbols : Set(Char)
 
-  def initialize(start_state : DFAState, states : Set(DFAState), symbols : Set(Char))
+  def initialize(start_state : DFAState, states : Set(DFAState))
     @start_state = start_state
     @states = states
-    @symbols = symbols
   end
 
   def self.default() : DFAGraph
     states_set = Set(DFAState).new
     symbols_set = Set(Char).new
-    return DFAGraph.new(DFAState.default(), states_set, symbols_set)
+    return DFAGraph.new(DFAState.default(), states_set)
   end
 
   def minimize()
@@ -51,9 +49,7 @@ class DFAGraph
     end
     
     new_start_state = new_states.find { |s| s.transitions == @start_state.transitions }
-    if !new_start_state.nil?
-      @start_state = new_start_state
-    end
+    @start_state = new_start_state unless new_start_state.nil?
     @states = new_states
   end
 
