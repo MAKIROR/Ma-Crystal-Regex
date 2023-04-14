@@ -4,7 +4,7 @@ require "./regex"
 module RorCr
   VERSION = "0.1.0"
 
-  re = MRegex.new("a")
+  re = MRegex.new("a|b")
   puts re.match("aa")
   puts re.match("ab")
   puts re.match("a")

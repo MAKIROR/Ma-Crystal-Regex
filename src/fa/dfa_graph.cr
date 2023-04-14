@@ -3,15 +3,18 @@ require "./dfa_state"
 class DFAGraph
   property start_state : DFAState
   property states : Set(DFAState)
+  @symbols : Set(Char)
 
-  def initialize(start_state : DFAState, states : Set(DFAState))
+  def initialize(start_state : DFAState, states : Set(DFAState), symbols : Set(Char))
     @start_state = start_state
     @states = states
+    @symbols = symbols
   end
 
   def self.default() : DFAGraph
     states_set = Set(DFAState).new
-    return DFAGraph.new(DFAState.default(), states_set)
+    symbols_set = Set(Char).new
+    return DFAGraph.new(DFAState.default(), states_set, symbols_set)
   end
 
   def minimize()
@@ -29,15 +32,11 @@ class DFAGraph
       break if new_partitions.size == partitions.size
       partitions = new_partitions
     end
-    
 
-    minimized_dfa = DFAGraph.default()
     new_states = Set(DFAState).new
 
     partitions.each do |partition|
-      state = DFAState.default()
-      state.accepting = partition.any?(&.accepting)
-      state.transitions = partition.first.transitions
+      state = DFAState.new(partition.first.transitions, partition.first.accepting)
       new_states << state
     end
 

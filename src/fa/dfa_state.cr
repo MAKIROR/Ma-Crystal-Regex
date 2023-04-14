@@ -2,6 +2,10 @@ class DFAState
     property transitions : Hash(Char, DFAState)
     property accepting : Bool
 
+    def ==(other : DFAState)
+      transitions == other.transitions && accepting == other.accepting
+    end
+
     def initialize(transitions : Hash(Char, DFAState), accepting : Bool = false)
       @transitions = transitions
       @accepting = accepting

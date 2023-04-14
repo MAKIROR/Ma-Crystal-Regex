@@ -7,8 +7,9 @@ class MRegex
       postfix = MRegex.to_rpn(regex)
       nfa = NFAGraph.generate(postfix)
       @dfa = nfa.to_dfa()
-      puts [@dfa.states.size]
       @dfa.minimize()
+
+      puts [@dfa.states.size]
       puts [@dfa.start_state]
 
   end
