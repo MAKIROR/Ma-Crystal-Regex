@@ -21,7 +21,7 @@ class NFAState
     closure = Set(NFAState).new
     stack = [self]
     closure << self
-    accepting = false
+    accepting = self.accepting
   
     until stack.empty?
       current_nfa_state = stack.pop
@@ -50,7 +50,7 @@ class NFAState
         end
       end
     end
-    
+
     {next_states, accepting}
   end
 end
