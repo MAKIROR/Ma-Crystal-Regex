@@ -1,5 +1,6 @@
 # RCrystal-Regex
-A regex-parser
+A regex-parser.   
+Support: *()|\+?    
 
 ## Examples
 ```
